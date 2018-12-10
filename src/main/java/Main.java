@@ -33,7 +33,7 @@ public class Main {
 
         boolean streamMode = false;
 
-        HDT hdt = HDTManager.mapIndexedHDT("/home/pedro/Documentos/mb2wd/index_big_musicbrainz.hdt", null);
+        HDT hdt = HDTManager.mapIndexedHDT("/Users/Dennis/Downloads/datasets/musicbrainz/hdt_index/index_big.hdt", null);
 
         // Create Jena wrapper on top of HDT.
         HDTGraph graph = new HDTGraph(hdt);
