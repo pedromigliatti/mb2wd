@@ -1,11 +1,16 @@
 
 import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.query.*;
 import org.rdfhdt.hdt.exceptions.NotFoundException;
 import org.rdfhdt.hdt.hdt.HDT;
 import org.rdfhdt.hdt.hdt.HDTManager;
 import org.rdfhdt.hdtjena.HDTGraph;
 
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
@@ -13,12 +18,6 @@ import java.util.List;
 import org.apache.jena.ext.com.google.common.cache.Cache;
 import org.apache.jena.ext.com.google.common.cache.CacheBuilder;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.QueryExecutionFactory;
-import org.apache.jena.query.QueryFactory;
-import org.apache.jena.query.ResultSet;
-import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.Lang;
@@ -30,10 +29,13 @@ public class Main {
     private final static int DUP_WINDOW = 1000;
 
     public static void main(String[] args) throws IOException, NotFoundException {
-
         boolean streamMode = false;
 
-        HDT hdt = HDTManager.mapIndexedHDT("/Users/Dennis/Downloads/datasets/musicbrainz/hdt_index/index_big.hdt", null);
+        HDT hdt = HDTManager.mapIndexedHDT("/home/pedro/Documentos/mb2wd/index_big_musicbrainz.hdt", null);
+
+        File file = new File("/home/pedro/Documentos/mb2wd/output");
+        FileOutputStream fop = new FileOutputStream(file);
+        StreamRDF writer = StreamRDFWriter.getWriterStream(fop, Lang.NTRIPLES);
 
         // Create Jena wrapper on top of HDT.
         HDTGraph graph = new HDTGraph(hdt);
@@ -52,7 +54,16 @@ public class Main {
             // Perform the query and output the results, depending on query type
             if (query.isSelectType()) {
                 ResultSet results = qe.execSelect();
-                ResultSetFormatter.outputAsCSV(System.out, results);
+                Node predicate = NodeFactory.createURI("https://www.w3.org/OWL/sameAs");
+                writer.start();
+                while (results.hasNext()) {
+                    QuerySolution result = results.next();
+                    Node subject = NodeFactory.createURI(result.get("s").toString());
+                    Node object = NodeFactory.createURI(result.get("o").toString());
+                    Triple t = new Triple(subject, predicate, object);
+                    writer.triple(t);
+                }
+                writer.finish();
             } else if (query.isDescribeType()) {
                 if (streamMode) {
                     Iterator<Triple> results = qe.execDescribeTriples();
@@ -80,7 +91,7 @@ public class Main {
 
     private static void streamResults(Iterator<Triple> results) {
         StreamRDF writer = StreamRDFWriter.getWriterStream(System.out, Lang.NTRIPLES);
-        Cache<Triple,Boolean> seenTriples = CacheBuilder.newBuilder()
+        Cache<Triple, Boolean> seenTriples = CacheBuilder.newBuilder()
                 .maximumSize(DUP_WINDOW).build();
 
         writer.start();
