@@ -12,6 +12,7 @@ import org.rdfhdt.hdtjena.HDTGraph;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -31,15 +32,20 @@ public class Main {
     public static void main(String[] args) throws IOException, NotFoundException {
         boolean streamMode = false;
 
-        HDT hdt = HDTManager.mapIndexedHDT("/home/pedro/Documentos/mb2wd/index_big_musicbrainz.hdt", null);
+        HDT hdtMusicbrainz = HDTManager.mapIndexedHDT("index_big_musicbrainz.hdt", null);
+        HDT hdtWikidata = HDTManager.mapIndexedHDT("index_big.hdt", null);
 
-        File file = new File("/home/pedro/Documentos/mb2wd/output");
+        File file = new File("output.rdf");
         FileOutputStream fop = new FileOutputStream(file);
         StreamRDF writer = StreamRDFWriter.getWriterStream(fop, Lang.NTRIPLES);
 
         // Create Jena wrapper on top of HDT.
-        HDTGraph graph = new HDTGraph(hdt);
-        Model model = ModelFactory.createModelForGraph((Graph) graph);
+        HDTGraph graphMusicbrainz = new HDTGraph(hdtMusicbrainz);
+        Model modelMusicbrainz = ModelFactory.createModelForGraph((Graph) graphMusicbrainz);
+
+
+        HDTGraph graphWikidata = new HDTGraph(hdtWikidata);
+        Model modelWikidata = ModelFactory.createModelForGraph((Graph) graphWikidata);
 
         // Use Jena ARQ to execute the query.
         String sparqlQuery = "select * where { \n" +
@@ -47,13 +53,44 @@ public class Main {
                 "FILTER ( regex(str(?o), \"^https://www.wikidata.org/wiki/\"))\n" +
                 " } ";
 
-        Query query = QueryFactory.create(sparqlQuery);
-        QueryExecution qe = QueryExecutionFactory.create(query, model);
+        Query queryMusicbrainz = QueryFactory.create(sparqlQuery);
+        QueryExecution qem = QueryExecutionFactory.create(queryMusicbrainz, modelMusicbrainz);
+
+
+//        MusicBrainz work ID (P435)
+//        MusicBrainz label ID (P966)
+//        MusicBrainz artist ID (P434)
+//        MusicBrainz release group ID (P436)
+//        MusicBrainz area ID (P982)
+//        MusicBrainz place ID (P1004)
+//        MusicBrainz recording ID (P4404)
+//        MusicBrainz instrument ID (P1330)
+//        MusicBrainz series ID (P1407)
+//        MusicBrainz release ID (P5813)
+
+        HashMap<String, String> wikidataProperties = new HashMap<String, String>();
+        wikidataProperties.put("P434","artist");
+        wikidataProperties.put("P435","work");
+        wikidataProperties.put("P966","label");
+        wikidataProperties.put("P436","release_group");
+        wikidataProperties.put("P382","area");
+        wikidataProperties.put("P1004","place");
+        wikidataProperties.put("P4404","recording");
+        wikidataProperties.put("P1330","instrument");
+        wikidataProperties.put("P1407","series");
+        wikidataProperties.put("P5813","release");
+
+        sparqlQuery = "select * where { \n" +
+                "?s <http://www.wikidata.org/prop/direct/P434> ?artist .\n" +
+                " } ";
+
+        Query queryWikidata = QueryFactory.create(sparqlQuery);
+        QueryExecution qew = QueryExecutionFactory.create(queryWikidata, modelMusicbrainz);
 
         try {
             // Perform the query and output the results, depending on query type
-            if (query.isSelectType()) {
-                ResultSet results = qe.execSelect();
+            if (queryMusicbrainz.isSelectType()) {
+                ResultSet results = qem.execSelect();
                 Node predicate = NodeFactory.createURI("https://www.w3.org/OWL/sameAs");
                 writer.start();
                 while (results.hasNext()) {
@@ -63,29 +100,52 @@ public class Main {
                     Triple t = new Triple(subject, predicate, object);
                     writer.triple(t);
                 }
+
+                String lastProperty = "P434";
+
+                for(HashMap.Entry<String,String> property: wikidataProperties.entrySet()){
+                    sparqlQuery.replace(lastProperty, property.getKey());
+                    sparqlQuery.replace(wikidataProperties.get(lastProperty), property.getValue());
+
+                    queryWikidata = QueryFactory.create(sparqlQuery);
+                    qew = QueryExecutionFactory.create(queryWikidata, modelMusicbrainz);
+
+                    results = qew.execSelect();
+
+                    while (results.hasNext()) {
+                        QuerySolution result = results.next();
+                        Node subject = NodeFactory.createURI("https://musicbrainz.org/" + property.getValue() + "/" +result.get(property.getValue()).toString());
+                        Node object = NodeFactory.createURI(result.get("s").toString());
+                        Triple t = new Triple(subject, predicate, object);
+                        writer.triple(t);
+                    }
+
+                    lastProperty = property.getKey();
+                }
+
                 writer.finish();
-            } else if (query.isDescribeType()) {
+            } else if (queryMusicbrainz.isDescribeType()) {
                 if (streamMode) {
-                    Iterator<Triple> results = qe.execDescribeTriples();
+                    Iterator<Triple> results = qem.execDescribeTriples();
                     streamResults(results);
                 } else {
-                    Model result = qe.execDescribe();
+                    Model result = qem.execDescribe();
                     result.write(System.out, "N-TRIPLES", null);
                 }
-            } else if (query.isConstructType()) {
+            } else if (queryWikidata.isConstructType()) {
                 if (streamMode) {
-                    Iterator<Triple> results = qe.execConstructTriples();
+                    Iterator<Triple> results = qem.execConstructTriples();
                     streamResults(results);
                 } else {
-                    Model result = qe.execConstruct();
+                    Model result = qem.execConstruct();
                     result.write(System.out, "N-TRIPLES", null);
                 }
-            } else if (query.isAskType()) {
-                boolean b = qe.execAsk();
+            } else if (queryWikidata.isAskType()) {
+                boolean b = qem.execAsk();
                 System.out.println(b);
             }
         } finally {
-            qe.close();
+            qem.close();
         }
     }
 
