@@ -122,6 +122,8 @@ public class Main {
                 }
 
                 writer.finish();
+
+                replaceMb("output.rdf");
             } else if (queryMusicbrainz.isDescribeType()) {
                 if (streamMode) {
                     Iterator<Triple> results = qem.execDescribeTriples();
