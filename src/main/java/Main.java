@@ -9,9 +9,7 @@ import org.rdfhdt.hdt.hdt.HDTManager;
 import org.rdfhdt.hdtjena.HDTGraph;
 
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -165,5 +163,72 @@ public class Main {
             writer.triple(triple);
         }
         writer.finish();
+    }
+
+    private static void replaceMb(String path) throws IOException {
+
+        File file = new File("newMusicbrainz.rdf");
+        FileOutputStream fop = new FileOutputStream(file);
+        StreamRDF writer = StreamRDFWriter.getWriterStream(fop, Lang.NTRIPLES);
+
+        HDT hdtMusicbrainz = HDTManager.mapIndexedHDT("index_big_musicbrainz.hdt", null);
+        HDTGraph graphMusicbrainz = new HDTGraph(hdtMusicbrainz);
+        Model modelMusicbrainz = ModelFactory.createModelForGraph((Graph) graphMusicbrainz);
+
+
+
+
+        String sparqlQuery = "select * where { \n" +
+                "?s ?p ?o .\n" +
+                " } ";
+
+        Query query = QueryFactory.create(sparqlQuery);
+        QueryExecution qe = QueryExecutionFactory.create(query, modelMusicbrainz);
+
+        ResultSet results = qe.execSelect();
+        writer.start();
+        while (results.hasNext()) {
+            BufferedReader br = new BufferedReader(new FileReader(path));
+            QuerySolution result = results.next();
+            String subject = result.get("s").toString();
+            String predicate = result.get("p").toString();
+            String object = result.get("o").toString();
+
+            Node sub = NodeFactory.createURI(subject);
+            Node obj;
+            if(object.contains("http")){
+                obj = NodeFactory.createURI(object);
+            } else {
+                obj = NodeFactory.createLiteral(object);
+            }
+
+            if(subject.contains("musicbrainz")){
+                String line;
+                boolean find = false;
+                while ((line = br.readLine()) != null && !find){
+                    String[] triple = line.replace("<","").replace(">", "").split(" ");
+                    if(triple[0] == subject){
+                        find = true;
+                        sub = NodeFactory.createURI(triple[2]);
+                    }
+                }
+            }
+            if(object.contains("musicbrainz")){
+                String line;
+                boolean find = false;
+                while ((line = br.readLine()) != null && !find){
+                    String[] triple = line.replace("<","").replace(">", "").split(" ");
+                    if(triple[0] == object){
+                        find = true;
+                        obj = NodeFactory.createURI(triple[2]);
+                    }
+                }
+            }
+            Node pred = NodeFactory.createURI(predicate);
+            Triple t = new Triple(sub, pred, obj);
+            writer.triple(t);
+        }
+        writer.finish();
+
     }
 }
