@@ -169,6 +169,8 @@ public class Main {
 
     private static void replaceMb(String path) throws IOException {
 
+        System.out.println("Começar a substituir o musicbrainz");
+
         File file = new File("newMusicbrainz.rdf");
         FileOutputStream fop = new FileOutputStream(file);
         StreamRDF writer = StreamRDFWriter.getWriterStream(fop, Lang.NTRIPLES);
@@ -205,11 +207,11 @@ public class Main {
             }
 
             if(subject.contains("musicbrainz")){
-                System.out.println("TEM MUSICBRAINZ");
                 String line;
                 boolean find = false;
                 while ((line = br.readLine()) != null && !find){
                     String[] triple = line.replace("<","").replace(">", "").split(" ");
+                    System.out.println(triple[0] + "          " + subject);
                     if(triple[0] == subject){
                         find = true;
                         System.out.println(triple[2]);
@@ -217,7 +219,6 @@ public class Main {
                     }
                 }
             }
-            System.out.println("Já verificou o subject");
             if(object.contains("musicbrainz")){
                 String line;
                 boolean find = false;
