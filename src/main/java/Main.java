@@ -205,6 +205,7 @@ public class Main {
             }
 
             if(subject.contains("musicbrainz")){
+                System.out.println("TEM MUSICBRAINZ");
                 String line;
                 boolean find = false;
                 while ((line = br.readLine()) != null && !find){
@@ -216,6 +217,7 @@ public class Main {
                     }
                 }
             }
+            System.out.println("Já verificou o subject");
             if(object.contains("musicbrainz")){
                 String line;
                 boolean find = false;
