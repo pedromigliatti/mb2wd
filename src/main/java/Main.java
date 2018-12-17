@@ -211,6 +211,7 @@ public class Main {
                     String[] triple = line.replace("<","").replace(">", "").split(" ");
                     if(triple[0] == subject){
                         find = true;
+                        System.out.println(triple[2]);
                         sub = NodeFactory.createURI(triple[2]);
                     }
                 }
