@@ -211,7 +211,6 @@ public class Main {
                 boolean find = false;
                 while ((line = br.readLine()) != null && !find){
                     String[] triple = line.replace("<","").replace(">", "").split(" ");
-                    System.out.println(triple[0] + "          " + subject);
                     if(triple[0] == subject){
                         find = true;
                         System.out.println(triple[2]);
