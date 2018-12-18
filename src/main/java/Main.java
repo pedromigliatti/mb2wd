@@ -193,6 +193,7 @@ public class Main {
         writer.start();
         while (results.hasNext()) {
             BufferedReader br = new BufferedReader(new FileReader(path));
+
             QuerySolution result = results.next();
             String subject = result.get("s").toString();
             String predicate = result.get("p").toString();
@@ -211,7 +212,7 @@ public class Main {
                 boolean find = false;
                 while ((line = br.readLine()) != null && !find){
                     String[] triple = line.replace("<","").replace(">", "").split(" ");
-                    if(triple[0] == subject){
+                    if(triple[0].equals(subject)){
                         find = true;
                         System.out.println(triple[2]);
                         sub = NodeFactory.createURI(triple[2]);
@@ -223,7 +224,7 @@ public class Main {
                 boolean find = false;
                 while ((line = br.readLine()) != null && !find){
                     String[] triple = line.replace("<","").replace(">", "").split(" ");
-                    if(triple[0] == object){
+                    if(triple[0].equals(object)){
                         find = true;
                         obj = NodeFactory.createURI(triple[2]);
                     }
