@@ -216,9 +216,8 @@ public class Main {
                     sub = NodeFactory.createURI(resultSet.next().get("o").toString());
                 }
             }
-            if(object.contains("musicbrainz")) {
+            if(object.contains("musicbrainz") && !object.contains(" ")) {
                 String objQuery = sparqlQuery.replace("?s", "<" + object + ">");
-                System.out.println(objQuery);
                 query = QueryFactory.create(objQuery);
                 qe = QueryExecutionFactory.create(query, model);
                 ResultSet resultSet = qe.execSelect();
