@@ -218,6 +218,7 @@ public class Main {
             }
             if(object.contains("musicbrainz")) {
                 String objQuery = sparqlQuery.replace("?s", "<" + object + ">");
+                System.out.println(objQuery);
                 query = QueryFactory.create(objQuery);
                 qe = QueryExecutionFactory.create(query, model);
                 ResultSet resultSet = qe.execSelect();
