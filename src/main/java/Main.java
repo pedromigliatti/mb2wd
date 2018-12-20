@@ -180,7 +180,9 @@ public class Main {
         Model modelMusicbrainz = ModelFactory.createModelForGraph((Graph) graphMusicbrainz);
 
 
-
+        HDT hdt = HDTManager.mapIndexedHDT("output.hdt", null);
+        HDTGraph graph = new HDTGraph(hdt);
+        Model model = ModelFactory.createModelForGraph((Graph) graph);
 
         String sparqlQuery = "select * where { \n" +
                 "?s ?p ?o .\n" +
@@ -192,8 +194,6 @@ public class Main {
         ResultSet results = qe.execSelect();
         writer.start();
         while (results.hasNext()) {
-            BufferedReader br = new BufferedReader(new FileReader(path));
-
             QuerySolution result = results.next();
             String subject = result.get("s").toString();
             String predicate = result.get("p").toString();
@@ -208,27 +208,16 @@ public class Main {
             }
 
             if(subject.contains("musicbrainz")){
-                String line;
-                boolean find = false;
-                while ((line = br.readLine()) != null && !find){
-                    String[] triple = line.replace("<","").replace(">", "").split(" ");
-                    if(triple[0].equals(subject)){
-                        find = true;
-                        System.out.println(triple[2]);
-                        sub = NodeFactory.createURI(triple[2]);
-                    }
-                }
+                String subQuery = sparqlQuery.replace("s", subject);
+                query = QueryFactory.create(subQuery);
+                qe = QueryExecutionFactory.create(query, model);
+                sub = NodeFactory.createURI(qe.execSelect().next().get("o").toString());
             }
             if(object.contains("musicbrainz")){
-                String line;
-                boolean find = false;
-                while ((line = br.readLine()) != null && !find){
-                    String[] triple = line.replace("<","").replace(">", "").split(" ");
-                    if(triple[0].equals(object)){
-                        find = true;
-                        obj = NodeFactory.createURI(triple[2]);
-                    }
-                }
+                String objQuery = sparqlQuery.replace("s", object);
+                query = QueryFactory.create(objQuery);
+                qe = QueryExecutionFactory.create(query, model);
+                obj = NodeFactory.createURI(qe.execSelect().next().get("o").toString());
             }
             Node pred = NodeFactory.createURI(predicate);
             Triple t = new Triple(sub, pred, obj);
