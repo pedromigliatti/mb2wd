@@ -211,16 +211,18 @@ public class Main {
                 String subQuery = sparqlQuery.replace("?s", "<" + subject + ">");
                 query = QueryFactory.create(subQuery);
                 qe = QueryExecutionFactory.create(query, model);
-                if (qe.execSelect().hasNext()) {
-                    sub = NodeFactory.createURI(qe.execSelect().next().get("o").toString());
+                ResultSet resultSet = qe.execSelect();
+                if (resultSet.hasNext()) {
+                    sub = NodeFactory.createURI(resultSet.next().get("o").toString());
                 }
             }
             if(object.contains("musicbrainz")) {
                 String objQuery = sparqlQuery.replace("?s", "<" + object + ">");
                 query = QueryFactory.create(objQuery);
                 qe = QueryExecutionFactory.create(query, model);
-                if (qe.execSelect().hasNext()) {
-                    obj = NodeFactory.createURI(qe.execSelect().next().get("o").toString());
+                ResultSet resultSet = qe.execSelect();
+                if (resultSet.hasNext()) {
+                    obj = NodeFactory.createURI(resultSet.next().get("o").toString());
                 }
             }
             Node pred = NodeFactory.createURI(predicate);
