@@ -207,19 +207,21 @@ public class Main {
                 obj = NodeFactory.createLiteral(object);
             }
 
-            if(subject.contains("musicbrainz")){
-                String subQuery = sparqlQuery.replace("s", subject);
+            if(subject.contains("musicbrainz")) {
+                String subQuery = sparqlQuery.replace("?s", subject);
                 query = QueryFactory.create(subQuery);
                 qe = QueryExecutionFactory.create(query, model);
-                System.out.println(qe.execSelect().next().get("o").toString());
-                sub = NodeFactory.createURI(qe.execSelect().next().get("o").toString());
+                if (qe.execSelect().hasNext()) {
+                    sub = NodeFactory.createURI(qe.execSelect().next().get("o").toString());
+                }
             }
-            if(object.contains("musicbrainz")){
-                String objQuery = sparqlQuery.replace("s", object);
+            if(object.contains("musicbrainz")) {
+                String objQuery = sparqlQuery.replace("?s", object);
                 query = QueryFactory.create(objQuery);
                 qe = QueryExecutionFactory.create(query, model);
-                System.out.println(qe.execSelect().next().get("o").toString());
-                obj = NodeFactory.createURI(qe.execSelect().next().get("o").toString());
+                if (qe.execSelect().hasNext()) {
+                    obj = NodeFactory.createURI(qe.execSelect().next().get("o").toString());
+                }
             }
             Node pred = NodeFactory.createURI(predicate);
             Triple t = new Triple(sub, pred, obj);
