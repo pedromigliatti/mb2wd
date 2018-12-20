@@ -208,7 +208,7 @@ public class Main {
             }
 
             if(subject.contains("musicbrainz")) {
-                String subQuery = sparqlQuery.replace("?s", subject);
+                String subQuery = sparqlQuery.replace("?s", "<" + subject + ">");
                 query = QueryFactory.create(subQuery);
                 qe = QueryExecutionFactory.create(query, model);
                 if (qe.execSelect().hasNext()) {
@@ -216,7 +216,7 @@ public class Main {
                 }
             }
             if(object.contains("musicbrainz")) {
-                String objQuery = sparqlQuery.replace("?s", object);
+                String objQuery = sparqlQuery.replace("?s", "<" + object + ">");
                 query = QueryFactory.create(objQuery);
                 qe = QueryExecutionFactory.create(query, model);
                 if (qe.execSelect().hasNext()) {
